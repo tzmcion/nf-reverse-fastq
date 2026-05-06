@@ -1,0 +1,7 @@
+name: files_download
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - sra-tools=3.4.*
+  - seqkit=2.13.*

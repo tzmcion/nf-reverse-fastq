@@ -1,0 +1,7 @@
+name: python_envs
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - polars=1.40.*
+  - colorama=0.4.*

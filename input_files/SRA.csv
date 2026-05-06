@@ -1,0 +1,7 @@
+SRA_id; Name; Description; Organism; Technique
+SRR37004874; GSM9478788; group3 MKRN2 KO SHSY5Y cells, Co-expression of CSDE1 and MKRN2; Homo sapiens; RIP-Seq
+SRR37004875; GSM9478787; group3 MKRN2 KO SHSY5Y cells, Overexpression of CSDE1; Homo sapiens; RIP-Seq
+SRR37004876; GSM9478786; group3 MKRN2 KO SHSY5Y cells, Control; Homo sapiens; RIP-Seq
+SRR37004877; GSM9478785; group2 MKRN2 KO SHSY5Y cells, Co-expression of CSDE1 and MKRN2; Homo sapiens; RIP-Seq
+SRR37004878; GSM9478784; group2 MKRN2 KO SHSY5Y cells, Overexpression of CSDE1; Homo sapiens; RIP-Seq
+SRR37004879; GSM9478783; group2 MKRN2 KO SHSY5Y cells, Control; Homo sapiens; RIP-Seq

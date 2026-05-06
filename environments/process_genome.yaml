@@ -1,0 +1,7 @@
+name: process_genome
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bowtie2=2.5.*
+  - samtools=1.23.*

@@ -21,6 +21,7 @@ params {
     csvSRA: String
     genes: String
     refGenome_regex: String
+    refGenome_indexed: String
 }
 
 workflow {
@@ -35,7 +36,7 @@ workflow {
     //Extract only XY and 1-22 chromosomes from the refGenome
     cut_genome(DOWNLOAD_CHECK_GENOME.out.ref_genome, params.refGenome_regex)
     //Build the index of genome_ref, as it is time-consuming, index can be given
-    build_index(cut_genome.out.genome_ref, Channel.fromPath(params.refGenome_indexed))
+    
     
     //Get the SRA IDs from input file and 
     SRA_files = Channel.fromPath(params.csvSRA)
@@ -49,8 +50,8 @@ workflow {
 
     //Align the reads and get the reverse reads
     ALIGN_WORKFLOW(
-        build_index.out.indexed_folder,
-        build_index.out.indexed_name,
+        cut_genome.out.genome_ref,
+        Channel.fromPath(params.refGenome_indexed),
         gene_location.out.genes_locs,
         SRA_files
         )

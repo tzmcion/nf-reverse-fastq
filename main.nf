@@ -7,6 +7,10 @@ include {build_index} from "./modules/process_genome.nf"
 include {gene_location} from "./modules/locations.nf"
 include {align_sort_reads} from "./modules/process_genome.nf"
 include {reverse_engineer_reads} from "./modules/process_genome.nf"
+include {zip_files} from "./modules/process_genome.nf"
+
+include {DOWNLOAD_CHECK_GENOME} from "./workflows/dw_genome_workflow.nf"
+include {ALIGN_WORKFLOW} from "./workflows/align_workflow.nf"
 
 params {
     batch: String
@@ -17,63 +21,52 @@ params {
     csvSRA: String
     genes: String
     refGenome_regex: String
+    refGenome_indexed: String
 }
 
 workflow {
     main:
-    //download the reference genome
-    downloadGenome(params.annotations_file_link, params.refGenome_file_link)
-    checkSum1(params.checksum_annotations, params.annotations_file_link, downloadGenome.out.annot_file)
-    checkSum2(params.checksum_genome, params.refGenome_file_link, downloadGenome.out.ref_file)
+    //Wrkflow for downloading and checking the control sum of annotation and reference files
+    DOWNLOAD_CHECK_GENOME(
+        params.annotations_file_link,
+        params.checksum_annotations,
+        params.refGenome_file_link,
+        params.checksum_genome
+    )
     //Extract only XY and 1-22 chromosomes from the refGenome
-    cut_genome(downloadGenome.out.ref_file, params.refGenome_regex)
-    //Build the index of genome_ref
-    build_index(cut_genome.out.genome_ref)
+    cut_genome(DOWNLOAD_CHECK_GENOME.out.ref_genome, params.refGenome_regex)
+    //Build the index of genome_ref, as it is time-consuming, index can be given
+    
     
     //Get the SRA IDs from input file and 
     SRA_files = Channel.fromPath(params.csvSRA)
                     .splitCsv(header: true, sep: ';')
                     .map(item -> item["SRA_id"])
 
-    //Download the reads from SRA
-    download_reads(SRA_files)
-    download_reads.out.reads
-        .set {paired_reads}
-
-    //Align the reads using indexed items in folder
-    align_sort_reads(build_index.out.indexed_folder,
-     build_index.out.indexed_name,
-     paired_reads)
-
-    //Get the genes names from params file, and extract their location
-    //using python script
+    //Get the genes names into a channel
     genes_names = Channel.fromPath(params.genes)
-    gene_location(genes_names, downloadGenome.out.annot_file)
+    //Get the genes locations from annotations file into
+    gene_location(genes_names, DOWNLOAD_CHECK_GENOME.out.annot_file)
 
-    //Get the localizations from csv output file and split by ";"
-    //The the first column will be name of the gene
-    //And the second column will be it's localization
-    localizations = gene_location.out.genes_locs
-        .splitCsv(sep: ";")
+    //Align the reads and get the reverse reads
+    ALIGN_WORKFLOW(
+        cut_genome.out.genome_ref,
+        Channel.fromPath(params.refGenome_indexed),
+        gene_location.out.genes_locs,
+        SRA_files
+        )
 
-    //Combine the gene_names, genes_locations and fastq reads to
-    //make sure each fastq file is used 
-    combs = localizations.combine(align_sort_reads.out.align_tuple)
-
-    //reverse the reads
-    reverse_engineer_reads(combs)
-
+    //Zip the results into one gzip file
+    zip_files(
+        ALIGN_WORKFLOW.out.reads.collect()
+    )
+    //publish the results
     publish:
-    gene_locations = gene_location.out.genes_locs
-    revs = reverse_engineer_reads.out.fastqs_gene
+    revs = zip_files.out.zipped_fastqs
 }
 
 output {
-    //As output there will be genes locations
-    gene_locations{
-        path "genes_locations"
-        mode "copy"
-    }//And of course the reads
+    //And of course the reads
     revs{
         path "reversed_fastqs"
         mode "copy"

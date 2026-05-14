@@ -5,3 +5,4 @@ channels:
 dependencies:
   - polars=1.40.*
   - colorama=0.4.*
+  - python=3.11
